@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Undo2, CheckCircle2, XCircle } from "lucide-react";
+import { Undo2, CheckCircle2, Camera, CameraOff } from "lucide-react";
+import { Html5Qrcode } from "html5-qrcode";
 
 export default function CheckIn() {
   const { eventId } = useParams();
@@ -19,6 +20,9 @@ export default function CheckIn() {
   const [recent, setRecent] = useState<{ checkin_id: string; name: string; code: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const lastScanRef = useRef<{ code: string; at: number }>({ code: "", at: 0 });
 
   useEffect(() => { if (!loading && !user) nav("/auth"); }, [user, loading, nav]);
 
@@ -32,11 +36,11 @@ export default function CheckIn() {
   };
   useEffect(() => { refresh(); }, [eventId]);
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code.trim()) return;
+  const checkIn = async (raw: string) => {
+    const value = raw.trim();
+    if (!value) return;
     setBusy(true);
-    const { data, error } = await supabase.rpc("checkin_by_code", { _event: eventId!, _code: code.trim() });
+    const { data, error } = await supabase.rpc("checkin_by_code", { _event: eventId!, _code: value });
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     const res = data as any;
@@ -45,7 +49,6 @@ export default function CheckIn() {
       else toast.error("Invalid code");
     } else {
       toast.success(`Checked in: ${res.name || res.email}`);
-      // get checkin id
       const { data: ci } = await supabase.from("checkins").select("id").eq("ticket_id", res.ticket_id).maybeSingle();
       setRecent((r) => [{ checkin_id: ci?.id || "", name: res.name || res.email, code: res.code }, ...r].slice(0, 10));
       refresh();
@@ -53,6 +56,46 @@ export default function CheckIn() {
     setCode("");
     inputRef.current?.focus();
   };
+
+  const submit = (e: React.FormEvent) => { e.preventDefault(); checkIn(code); };
+
+  const startScan = async () => {
+    setScanning(true);
+    // wait for the DOM node to mount
+    setTimeout(async () => {
+      try {
+        const inst = new Html5Qrcode("qr-reader");
+        scannerRef.current = inst;
+        await inst.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          (decoded) => {
+            const now = Date.now();
+            if (decoded === lastScanRef.current.code && now - lastScanRef.current.at < 2500) return;
+            lastScanRef.current = { code: decoded, at: now };
+            checkIn(decoded);
+          },
+          () => {}
+        );
+      } catch (err: any) {
+        toast.error(err?.message || "Camera unavailable");
+        setScanning(false);
+      }
+    }, 50);
+  };
+
+  const stopScan = async () => {
+    try {
+      if (scannerRef.current) {
+        await scannerRef.current.stop();
+        await scannerRef.current.clear();
+      }
+    } catch {}
+    scannerRef.current = null;
+    setScanning(false);
+  };
+
+  useEffect(() => () => { if (scannerRef.current) { scannerRef.current.stop().catch(() => {}); } }, []);
 
   const undo = async () => {
     const last = recent[0];
@@ -80,6 +123,13 @@ export default function CheckIn() {
           <Input ref={inputRef} autoFocus placeholder="Ticket code (e.g. A4B7Z9KM)" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="font-mono tracking-widest" />
           <Button type="submit" disabled={busy}>Check in</Button>
         </form>
+        <div className="mt-4">
+          <Button type="button" variant="outline" size="sm" onClick={scanning ? stopScan : startScan}>
+            {scanning ? <><CameraOff className="h-4 w-4 mr-1" />Stop camera</> : <><Camera className="h-4 w-4 mr-1" />Scan with camera</>}
+          </Button>
+          <div id="qr-reader" className={`mt-3 rounded overflow-hidden ${scanning ? "block" : "hidden"}`} />
+          {scanning && <p className="text-xs text-muted-foreground mt-2">Point the camera at the attendee's QR code.</p>}
+        </div>
       </Card>
       {recent.length > 0 && (
         <Card className="p-4">
