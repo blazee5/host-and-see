@@ -25,7 +25,7 @@ export function EventFeedback({ eventId, hostId, hasEnded, attended }: { eventId
     const uids = Array.from(new Set(raw.map((r) => r.user_id)));
     let profMap: Record<string, { full_name: string | null }> = {};
     if (uids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id,full_name").in("id", uids);
+      const { data: profs } = await supabase.rpc("get_display_names", { _ids: uids });
       (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
     }
     const list: FB[] = raw.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: null } }));
