@@ -1,0 +1,5 @@
+name,email,rsvp_status,checkin_time
+"Sam Attendee","attendee@demo.local","confirmed","2026-05-12T18:03:11Z"
+"Jordan Maker","jordan@demo.local","confirmed",""
+"Riley Builder","riley@demo.local","waitlist",""
+"Alex Cancelled","alex@demo.local","cancelled",""
