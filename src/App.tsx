@@ -16,6 +16,7 @@ import EventEditor from "./pages/EventEditor";
 import MyTickets from "./pages/MyTickets";
 import MyEvents from "./pages/MyEvents";
 import CheckIn from "./pages/CheckIn";
+import HostInvite from "./pages/HostInvite";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/host/events/new" element={<EventEditor />} />
             <Route path="/host/events/:id/edit" element={<EventEditor />} />
             <Route path="/host/checkin/:eventId" element={<CheckIn />} />
+            <Route path="/host/invite/:token" element={<HostInvite />} />
             <Route path="/me/tickets" element={<MyTickets />} />
             <Route path="/me/events" element={<MyEvents />} />
             <Route path="*" element={<NotFound />} />
