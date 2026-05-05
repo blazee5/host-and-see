@@ -20,8 +20,15 @@ export function EventFeedback({ eventId, hostId, hasEnded, attended }: { eventId
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("feedback").select("*, profiles:user_id(full_name)").eq("event_id", eventId).order("created_at", { ascending: false });
-    const list = (data || []) as FB[];
+    const { data } = await supabase.from("feedback").select("*").eq("event_id", eventId).order("created_at", { ascending: false });
+    const raw = (data || []) as any[];
+    const uids = Array.from(new Set(raw.map((r) => r.user_id)));
+    let profMap: Record<string, { full_name: string | null }> = {};
+    if (uids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id,full_name").in("id", uids);
+      (profs || []).forEach((p: any) => { profMap[p.id] = { full_name: p.full_name }; });
+    }
+    const list: FB[] = raw.map((r) => ({ ...r, profiles: profMap[r.user_id] || { full_name: null } }));
     setItems(list);
     if (user) {
       const m = list.find((f) => f.user_id === user.id) || null;
