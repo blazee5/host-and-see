@@ -20,6 +20,7 @@ export default function HostDashboard() {
   const [events, setEvents] = useState<EvRow[]>([]);
   const [stats, setStats] = useState<Record<string, { going: number; waitlist: number; checkedin: number }>>({});
   const [members, setMembers] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
 
   useEffect(() => { if (!loading && !user) nav("/auth?next=/host/dashboard"); }, [user, loading, nav]);
   useEffect(() => { if (!hl && !primaryHost) nav("/host/onboarding"); }, [primaryHost, hl, nav]);
@@ -45,6 +46,8 @@ export default function HostDashboard() {
     }
     const { data: mems } = await supabase.from("host_members").select("*, profiles:user_id(full_name,email)").eq("host_id", primaryHost.id);
     setMembers(mems || []);
+    const { data: reps } = await supabase.from("reports").select("*").eq("host_id", primaryHost.id).order("created_at", { ascending: false });
+    setReports(reps || []);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [primaryHost?.id]);
 
@@ -152,6 +155,7 @@ export default function HostDashboard() {
           <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
           <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
           <TabsTrigger value="team">Team ({members.length})</TabsTrigger>
+          <TabsTrigger value="reports">Reports ({reports.filter((r:any)=>r.status==='open').length})</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-4">{renderList(upcoming)}</TabsContent>
         <TabsContent value="past" className="mt-4">{renderList(past)}</TabsContent>
@@ -176,6 +180,34 @@ export default function HostDashboard() {
                 </div>
               ))}
             </div>
+          </Card>
+        </TabsContent>
+        <TabsContent value="reports" className="mt-4">
+          <Card className="p-4">
+            {reports.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 text-center">No reports.</p>
+            ) : (
+              <div className="space-y-2">
+                {reports.map((r: any) => (
+                  <div key={r.id} className="flex items-center justify-between text-sm border-b last:border-0 py-2 gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{r.target_type}</Badge>
+                        <Badge variant={r.status === "open" ? "destructive" : "secondary"}>{r.status}</Badge>
+                      </div>
+                      <p className="text-muted-foreground mt-1 break-words">{r.reason}</p>
+                      <p className="text-xs text-muted-foreground">target id: {r.target_id}</p>
+                    </div>
+                    {r.status === "open" && (
+                      <Button size="sm" variant="outline" onClick={async () => {
+                        const { error } = await supabase.from("reports").update({ status: "resolved" }).eq("id", r.id);
+                        if (error) toast.error(error.message); else { toast.success("Resolved"); load(); }
+                      }}>Mark resolved</Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
