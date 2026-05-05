@@ -295,30 +295,30 @@ export type Database = {
       reports: {
         Row: {
           created_at: string
-          host_id: string | null
+          host_id: string
           id: string
           reason: string | null
-          reporter_id: string | null
+          reporter_id: string
           status: string
           target_id: string
           target_type: string
         }
         Insert: {
           created_at?: string
-          host_id?: string | null
+          host_id: string
           id?: string
           reason?: string | null
-          reporter_id?: string | null
+          reporter_id: string
           status?: string
           target_id: string
           target_type: string
         }
         Update: {
           created_at?: string
-          host_id?: string | null
+          host_id?: string
           id?: string
           reason?: string | null
-          reporter_id?: string | null
+          reporter_id?: string
           status?: string
           target_id?: string
           target_type?: string
@@ -422,6 +422,13 @@ export type Database = {
       }
       checkin_undo: { Args: { _checkin: string }; Returns: undefined }
       gen_ticket_code: { Args: never; Returns: string }
+      get_display_names: {
+        Args: { _ids: string[] }
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       has_host_role: {
         Args: {
           _host: string
