@@ -1,12 +1,14 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useMyHost } from "@/hooks/useMyHost";
+import { ThemeProvider, useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Calendar, LogOut, Ticket, LayoutDashboard, Compass } from "lucide-react";
+import { Calendar, LogOut, Ticket, LayoutDashboard, Compass, Moon, Sun } from "lucide-react";
 
 function Nav() {
   const { user, signOut } = useAuth();
   const { primaryHost } = useMyHost();
+  const { theme, toggle } = useTheme();
   const nav = useNavigate();
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
@@ -29,6 +31,9 @@ function Nav() {
           )}
         </nav>
         <div className="flex items-center gap-2">
+          <Button size="icon" variant="ghost" onClick={toggle} aria-label="Toggle theme">
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           {user ? (
             <>
               {!primaryHost && (
@@ -49,16 +54,18 @@ function Nav() {
 
 export default function Layout() {
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex flex-col">
-        <Nav />
-        <main className="flex-1">
-          <Outlet />
-        </main>
-        <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-          Gather · community events made easy
-        </footer>
-      </div>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col">
+          <Nav />
+          <main className="flex-1">
+            <Outlet />
+          </main>
+          <footer className="border-t py-6 text-center text-xs text-muted-foreground">
+            Gather · community events made easy
+          </footer>
+        </div>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
