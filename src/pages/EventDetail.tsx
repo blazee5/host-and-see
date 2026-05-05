@@ -7,7 +7,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { eventDateLabel, isPast, googleCalUrl } from "@/lib/event-helpers";
-import { Calendar, MapPin, Users, Link as LinkIcon } from "lucide-react";
+import { Calendar, MapPin, Users, Link as LinkIcon, Flag } from "lucide-react";
+import { EventGallery } from "@/components/EventGallery";
+import { EventFeedback } from "@/components/EventFeedback";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -85,6 +87,32 @@ export default function EventDetail() {
             </p>
           )}
           <div className="prose prose-sm max-w-none mt-6 whitespace-pre-wrap">{event.description}</div>
+          {user && host && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-4 text-muted-foreground"
+              onClick={async () => {
+                const reason = prompt("Why are you reporting this event?");
+                if (!reason) return;
+                const { error } = await supabase.from("reports").insert({ target_type: "event", target_id: event.id, host_id: host.id, reporter_id: user.id, reason });
+                if (error) toast.error(error.message); else toast.success("Reported");
+              }}
+            >
+              <Flag className="h-3 w-3 mr-1" />Report event
+            </Button>
+          )}
+          {host && (
+            <div className="mt-8 space-y-6">
+              <EventGallery eventId={event.id} hostId={host.id} />
+              <EventFeedback
+                eventId={event.id}
+                hostId={host.id}
+                hasEnded={past}
+                attended={!!myRsvp && myRsvp.status === "confirmed"}
+              />
+            </div>
+          )}
         </div>
         <Card className="p-5 h-fit space-y-4">
           <div className="text-sm space-y-2">
