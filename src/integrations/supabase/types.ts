@@ -415,6 +415,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_host_invite: { Args: { _token: string }; Returns: Json }
       checkin_by_code: {
         Args: { _code: string; _event: string }
         Returns: Json
