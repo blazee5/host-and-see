@@ -241,6 +241,7 @@ export type Database = {
       hosts: {
         Row: {
           bio: string | null
+          contact_email: string | null
           created_at: string
           id: string
           logo_url: string | null
@@ -251,6 +252,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          contact_email?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -261,6 +263,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          contact_email?: string | null
           created_at?: string
           id?: string
           logo_url?: string | null
