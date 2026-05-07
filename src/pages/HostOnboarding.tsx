@@ -19,6 +19,10 @@ export default function HostOnboarding() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [website, setWebsite] = useState("");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -27,6 +31,19 @@ export default function HostOnboarding() {
 
   useEffect(() => { if (primaryHost) nav("/host/dashboard"); }, [primaryHost, nav]);
 
+  useEffect(() => { if (user && !contactEmail) setContactEmail(user.email || ""); }, [user]); // eslint-disable-line
+
+  const uploadLogo = async (file: File) => {
+    if (!user) return;
+    setUploading(true);
+    const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
+    const { error } = await supabase.storage.from("host-logos").upload(path, file);
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("host-logos").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    setUploading(false);
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -34,6 +51,7 @@ export default function HostOnboarding() {
     const finalSlug = slug || slugify(name) + "-" + Math.random().toString(36).slice(2, 6);
     const { error } = await supabase.from("hosts").insert({
       owner_id: user.id, name, slug: finalSlug, bio: bio || null,
+      contact_email: contactEmail || null, website: website || null, logo_url: logoUrl,
     });
     setBusy(false);
     if (error) return toast.error(error.message);
@@ -50,8 +68,16 @@ export default function HostOnboarding() {
         <form onSubmit={submit} className="space-y-4">
           <div><Label>Host name</Label><Input value={name} onChange={(e) => { setName(e.target.value); if (!slug) setSlug(slugify(e.target.value)); }} required /></div>
           <div><Label>URL slug</Label><Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="my-community" /></div>
+          <div><Label>Contact email *</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required /></div>
+          <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           <div><Label>Bio</Label><Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} /></div>
-          <Button type="submit" className="w-full" disabled={busy || !name}>Create host</Button>
+          <div>
+            <Label>Logo</Label>
+            {logoUrl && <img src={logoUrl} alt="logo" className="mt-2 h-20 w-20 object-cover rounded-full" />}
+            <Input type="file" accept="image/*" className="mt-2" onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
+            {uploading && <p className="text-xs text-muted-foreground mt-1">Uploading…</p>}
+          </div>
+          <Button type="submit" className="w-full" disabled={busy || !name || !contactEmail}>Create host</Button>
         </form>
       </Card>
     </div>

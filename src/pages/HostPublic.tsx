@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import EventCard from "@/components/EventCard";
+import { useSeo } from "@/hooks/useSeo";
 
 export default function HostPublic() {
   const { slug } = useParams();
@@ -20,6 +21,12 @@ export default function HostPublic() {
       }
     })();
   }, [slug]);
+
+  useSeo({
+    title: host ? `${host.name} · Gather` : "Host · Gather",
+    description: host?.bio || `Events by ${host?.name || "this host"} on Gather.`,
+    image: host?.logo_url || null,
+  });
 
   if (!host) return <div className="container py-12 text-muted-foreground">Loading…</div>;
   return (

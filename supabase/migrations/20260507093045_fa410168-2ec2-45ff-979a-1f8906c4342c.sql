@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.promote_waitlist_on_capacity() FROM PUBLIC, anon, authenticated;

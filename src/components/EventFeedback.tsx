@@ -34,7 +34,7 @@ export function EventFeedback({ eventId, hostId, hasEnded, attended }: { eventId
       const m = list.find((f) => f.user_id === user.id) || null;
       setMine(m);
       if (m) { setRating(m.rating); setComment(m.comment || ""); }
-      const { data: hm } = await supabase.from("host_members").select("role").eq("host_id", hostId).eq("user_id", user.id).not("accepted_at", "is", null).maybeSingle();
+      const { data: hm } = await supabase.from("host_members").select("role").eq("host_id", hostId).eq("user_id", user.id).eq("role", "host").not("accepted_at", "is", null).maybeSingle();
       setIsHost(!!hm);
     }
   };

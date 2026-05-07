@@ -20,7 +20,7 @@ export function EventGallery({ eventId, hostId }: { eventId: string; hostId: str
     const { data } = await supabase.from("gallery_uploads").select("*").eq("event_id", eventId).order("created_at", { ascending: false });
     setItems((data || []) as Item[]);
     if (user) {
-      const { data: m } = await supabase.from("host_members").select("role").eq("host_id", hostId).eq("user_id", user.id).not("accepted_at", "is", null).maybeSingle();
+      const { data: m } = await supabase.from("host_members").select("role").eq("host_id", hostId).eq("user_id", user.id).eq("role", "host").not("accepted_at", "is", null).maybeSingle();
       setIsHost(!!m);
     } else setIsHost(false);
   };
