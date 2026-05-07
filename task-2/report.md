@@ -26,6 +26,13 @@
 - Gallery uploads default `approved=false`; only the uploader, host members, and (after approval) the public can see them. Hosts approve/hide from the event page itself.
 - Feedback opens only after `end_at < now()` AND the viewer holds a confirmed RSVP. Hosts can hide individual reviews.
 - Reports table is generic (`target_type` + `target_id`) so events, gallery items, and feedback share one moderation queue in the host dashboard's Reports tab.
+- Reports queue inlines a preview of the reported target (event title link / gallery thumbnail / feedback text + rating) with a single "Hide & resolve" action that hides the underlying record (or unpublishes the event) and marks the report resolved in one click. Hidden state is shown next to already-actioned reports.
+- Per-page social meta (title / description / og:image / canonical / twitter card) is set imperatively from a tiny `useSeo` hook on event and host pages (titles capped at 60 chars, descriptions at 160).
+- Roles are strictly separated in the UI: **Checker** members see only the upcoming/past lists and the Check-in button on each card; the Team / Reports / Profile tabs and Edit/Publish/Duplicate/CSV actions are gated to **Host** members. Gallery and feedback moderation also require the `host` role (not just any membership).
+- Invites are role-selectable in the Team tab — a dropdown lets the owner generate a `host` or `checker` invite link.
+- Capacity changes promote the waitlist automatically: an `AFTER UPDATE OF capacity` trigger on `events` calls a `SECURITY DEFINER` function that confirms the next FIFO waitlist entries and issues their tickets in the same transaction. EXECUTE on that function is revoked from clients.
+- Host onboarding now collects logo (uploaded to the `host-logos` bucket), contact email (required), website, and bio. The dashboard has a Profile tab to edit these later.
+- My Events shows two tabs (Attending / Hosting), with shared search + when (upcoming / past / all) + host filter, and role-appropriate quick actions (View ticket for attendees, Check-in / Edit for host-side roles).
 
 ## Pages delivered
 | Spec page | Route |

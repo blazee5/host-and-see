@@ -2,6 +2,8 @@
 
 A lightweight platform to host and attend free community events. Built with React + Vite + Lovable Cloud (Supabase).
 
+**Live demo:** https://host-and-see.lovable.app
+
 ## Demo accounts (password: `demo1234`)
 
 | Role | Email |
