@@ -5,19 +5,19 @@ import { Calendar, Ticket, ScanLine } from "lucide-react";
 export default function Index() {
   return (
     <div>
-      <section className="container py-20 text-center max-w-3xl">
-        <h1 className="text-5xl font-bold tracking-tight mb-4">
+      <section className="container py-12 sm:py-20 text-center max-w-3xl">
+        <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
           Host & attend community events, the simple way.
         </h1>
-        <p className="text-lg text-muted-foreground mb-8">
+        <p className="text-base sm:text-lg text-muted-foreground mb-8">
           Free, fast event hosting with RSVPs, tickets, and check-ins. Built for community organizers.
         </p>
-        <div className="flex gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Button asChild size="lg"><Link to="/explore">Explore events</Link></Button>
           <Button asChild size="lg" variant="outline"><Link to="/host/onboarding">Host an event</Link></Button>
         </div>
       </section>
-      <section className="container grid md:grid-cols-3 gap-6 pb-20">
+      <section className="container grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 pb-12 sm:pb-20">
         {[
           { icon: Calendar, title: "Create & publish", text: "Draft, edit, and publish events with cover images." },
           { icon: Ticket, title: "RSVP & tickets", text: "Capacity-aware RSVPs with FIFO waitlist & QR tickets." },

@@ -74,20 +74,20 @@ export default function EventDetail() {
   };
 
   return (
-    <div className="container py-8 max-w-4xl">
-      <div className="aspect-video rounded-lg overflow-hidden bg-muted mb-6">
+    <div className="container py-6 sm:py-8 max-w-4xl">
+      <div className="aspect-video rounded-lg overflow-hidden bg-muted mb-4 sm:mb-6">
         {event.cover_url ? (
           <img src={event.cover_url} alt={event.title} className="w-full h-full object-cover" />
         ) : <div className="w-full h-full grid place-items-center"><Calendar className="h-16 w-16 text-muted-foreground" /></div>}
       </div>
-      <div className="grid md:grid-cols-3 gap-8">
+      <div className="grid md:grid-cols-3 gap-6 md:gap-8">
         <div className="md:col-span-2">
           <div className="flex gap-2 mb-2">
             {past && <Badge variant="secondary">Ended</Badge>}
             {event.status === "draft" && <Badge>Draft</Badge>}
             {event.visibility === "unlisted" && <Badge variant="outline">Unlisted</Badge>}
           </div>
-          <h1 className="text-3xl font-bold">{event.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">{event.title}</h1>
           {host && (
             <p className="text-sm text-muted-foreground mt-1">
               by <Link to={`/h/${host.slug}`} className="text-primary hover:underline">{host.name}</Link>

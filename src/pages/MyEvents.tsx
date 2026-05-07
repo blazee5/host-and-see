@@ -61,11 +61,11 @@ export default function MyEvents() {
 
   return (
     <div className="container py-8 max-w-5xl">
-      <h1 className="text-3xl font-bold mb-6">My events</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">My events</h1>
       <div className="flex gap-2 mb-4 flex-wrap">
-        <Input placeholder="Search by title…" value={search} onChange={(e) => setSearch(e.target.value)} className="max-w-xs" />
+        <Input placeholder="Search by title…" value={search} onChange={(e) => setSearch(e.target.value)} className="w-full sm:max-w-xs" />
         <Select value={when} onValueChange={(v: any) => setWhen(v)}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-36"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="upcoming">Upcoming</SelectItem>
             <SelectItem value="past">Past</SelectItem>
@@ -73,7 +73,7 @@ export default function MyEvents() {
           </SelectContent>
         </Select>
         <Select value={hostFilter} onValueChange={setHostFilter}>
-          <SelectTrigger className="w-48"><SelectValue placeholder="Host" /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Host" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All hosts</SelectItem>
             {hostOptions.map(([id, name]) => <SelectItem key={id} value={id}>{name}</SelectItem>)}

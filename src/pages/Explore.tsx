@@ -34,8 +34,8 @@ export default function Explore() {
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">Explore events</h1>
-      <div className="grid md:grid-cols-5 gap-3 mb-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Explore events</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 mb-4 sm:mb-6">
         <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} className="md:col-span-2" />
         <Input placeholder="Location" value={loc} onChange={(e) => setLoc(e.target.value)} />
         <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
