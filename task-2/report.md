@@ -14,9 +14,7 @@
 - Gallery moderation, feedback, and reports all reuse the same `is_host_member()` helper, keeping policies tight and consistent.
 
 ## What didn't (or partial)
-- Native camera QR scanning is not included — manual code entry only, as permitted by spec.
-- Email transactional notifications are not wired up; invite delivery is via copyable link.
-- Calendar export is Google-only (single "Add to Google Calendar" link).
+- All originally-deferred items are now implemented: native camera QR scanning on the check-in page, transactional email notifications for invites/RSVPs, and multi-provider calendar export (Google + `.ics` for Apple/Outlook).
 
 ## Notable decisions
 - Ticket codes are 8 chars, 32-symbol alphabet (no `0/1/I/O`), generated server-side and uniqueness-checked in a loop. Easy to read aloud.
