@@ -200,10 +200,10 @@ export default function HostDashboard() {
   );
 
   return (
-    <div className="container py-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div className="container py-6 sm:py-8 max-w-5xl">
+      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold">{primaryHost.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">{primaryHost.name}</h1>
           <p className="text-sm text-muted-foreground">Host dashboard · <Link to={`/h/${primaryHost.slug}`} className="text-primary hover:underline">public page</Link></p>
         </div>
         {isOwnerHost && (
@@ -213,7 +213,7 @@ export default function HostDashboard() {
         )}
       </div>
       <Tabs defaultValue="upcoming">
-        <TabsList>
+        <TabsList className="flex flex-wrap h-auto">
           <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
           <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
           {isOwnerHost && <TabsTrigger value="team">Team ({members.length})</TabsTrigger>}
