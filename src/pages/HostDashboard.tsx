@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { eventDateLabel, isPast } from "@/lib/event-helpers";
 import { toast } from "sonner";
-import { Plus, Copy, Download, ScanLine, Pencil, Eye, EyeOff, Files } from "lucide-react";
+import { Plus, Copy, Download, ScanLine, Pencil, Eye, EyeOff, Files, Trash2 } from "lucide-react";
 
 type EvRow = { id: string; title: string; start_at: string; end_at: string; status: string; visibility: string; capacity: number; venue: string | null; online_url: string | null; cover_url: string | null; description: string | null; timezone: string; is_paid: boolean; host_id: string; };
 
@@ -21,6 +25,10 @@ export default function HostDashboard() {
   const [stats, setStats] = useState<Record<string, { going: number; waitlist: number; checkedin: number }>>({});
   const [members, setMembers] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [reportTargets, setReportTargets] = useState<Record<string, any>>({});
+  const [inviteRole, setInviteRole] = useState<"host" | "checker">("checker");
+  const [profileForm, setProfileForm] = useState<any>(null);
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => { if (!loading && !user) nav("/auth?next=/host/dashboard"); }, [user, loading, nav]);
   useEffect(() => { if (!hl && !primaryHost) nav("/host/onboarding"); }, [primaryHost, hl, nav]);
@@ -48,6 +56,20 @@ export default function HostDashboard() {
     setMembers(mems || []);
     const { data: reps } = await supabase.from("reports").select("*").eq("host_id", primaryHost.id).order("created_at", { ascending: false });
     setReports(reps || []);
+    const targets: Record<string, any> = {};
+    const evIds = (reps || []).filter((r: any) => r.target_type === "event").map((r: any) => r.target_id);
+    const galIds = (reps || []).filter((r: any) => r.target_type === "gallery").map((r: any) => r.target_id);
+    const fbIds = (reps || []).filter((r: any) => r.target_type === "feedback").map((r: any) => r.target_id);
+    if (evIds.length) { const { data } = await supabase.from("events").select("id,title,status").in("id", evIds); (data || []).forEach((d: any) => targets["event:" + d.id] = d); }
+    if (galIds.length) { const { data } = await supabase.from("gallery_uploads").select("id,image_url,hidden").in("id", galIds); (data || []).forEach((d: any) => targets["gallery:" + d.id] = d); }
+    if (fbIds.length) { const { data } = await supabase.from("feedback").select("id,comment,rating,hidden").in("id", fbIds); (data || []).forEach((d: any) => targets["feedback:" + d.id] = d); }
+    setReportTargets(targets);
+    setProfileForm({
+      name: primaryHost.name, bio: (primaryHost as any).bio || "",
+      contact_email: (primaryHost as any).contact_email || "",
+      website: (primaryHost as any).website || "",
+      logo_url: primaryHost.logo_url || null,
+    });
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [primaryHost?.id]);
 
@@ -88,15 +110,56 @@ export default function HostDashboard() {
     load();
   };
 
-  const inviteChecker = async () => {
+  const sendInvite = async () => {
     if (!primaryHost) return;
     const token = crypto.randomUUID();
-    const { error } = await supabase.from("host_members").insert({ host_id: primaryHost.id, role: "checker", invite_token: token });
+    const { error } = await supabase.from("host_members").insert({ host_id: primaryHost.id, role: inviteRole, invite_token: token });
     if (error) return toast.error(error.message);
     const link = `${window.location.origin}/host/invite/${token}`;
     await navigator.clipboard.writeText(link);
-    toast.success("Invite link copied to clipboard");
+    toast.success(`${inviteRole} invite link copied`);
     load();
+  };
+
+  const removeMember = async (id: string) => {
+    const { error } = await supabase.from("host_members").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    load();
+  };
+
+  const hideTarget = async (r: any) => {
+    if (r.target_type === "gallery") {
+      await supabase.from("gallery_uploads").update({ hidden: true }).eq("id", r.target_id);
+    } else if (r.target_type === "feedback") {
+      await supabase.from("feedback").update({ hidden: true }).eq("id", r.target_id);
+    } else if (r.target_type === "event") {
+      await supabase.from("events").update({ status: "draft" }).eq("id", r.target_id);
+    }
+    await supabase.from("reports").update({ status: "resolved" }).eq("id", r.id);
+    toast.success("Hidden & resolved");
+    load();
+  };
+
+  const uploadLogo = async (file: File) => {
+    if (!user) return;
+    const path = `${user.id}/${crypto.randomUUID()}-${file.name}`;
+    const { error } = await supabase.storage.from("host-logos").upload(path, file);
+    if (error) return toast.error(error.message);
+    const { data } = supabase.storage.from("host-logos").getPublicUrl(path);
+    setProfileForm((p: any) => ({ ...p, logo_url: data.publicUrl }));
+  };
+
+  const saveProfile = async () => {
+    if (!primaryHost || !profileForm) return;
+    setSavingProfile(true);
+    const { error } = await supabase.from("hosts").update({
+      name: profileForm.name, bio: profileForm.bio || null,
+      contact_email: profileForm.contact_email || null,
+      website: profileForm.website || null, logo_url: profileForm.logo_url,
+    }).eq("id", primaryHost.id);
+    setSavingProfile(false);
+    if (error) return toast.error(error.message);
+    toast.success("Profile saved");
   };
 
   if (!primaryHost) return null;
@@ -145,7 +208,6 @@ export default function HostDashboard() {
         </div>
         {isOwnerHost && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={inviteChecker}><Copy className="h-4 w-4 mr-1" />Invite checker link</Button>
             <Button onClick={() => nav("/host/events/new")}><Plus className="h-4 w-4 mr-1" />New event</Button>
           </div>
         )}
@@ -154,14 +216,27 @@ export default function HostDashboard() {
         <TabsList>
           <TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger>
           <TabsTrigger value="past">Past ({past.length})</TabsTrigger>
-          <TabsTrigger value="team">Team ({members.length})</TabsTrigger>
-          <TabsTrigger value="reports">Reports ({reports.filter((r:any)=>r.status==='open').length})</TabsTrigger>
+          {isOwnerHost && <TabsTrigger value="team">Team ({members.length})</TabsTrigger>}
+          {isOwnerHost && <TabsTrigger value="reports">Reports ({reports.filter((r:any)=>r.status==='open').length})</TabsTrigger>}
+          {isOwnerHost && <TabsTrigger value="profile">Profile</TabsTrigger>}
         </TabsList>
         <TabsContent value="upcoming" className="mt-4">{renderList(upcoming)}</TabsContent>
         <TabsContent value="past" className="mt-4">{renderList(past)}</TabsContent>
-        <TabsContent value="team" className="mt-4">
+        {isOwnerHost && <TabsContent value="team" className="mt-4">
           <Card className="p-4">
-            <p className="text-sm text-muted-foreground mb-3">Team members & invites</p>
+            <div className="flex flex-wrap items-end gap-2 mb-4">
+              <div>
+                <Label className="text-xs">Invite as</Label>
+                <Select value={inviteRole} onValueChange={(v: any) => setInviteRole(v)}>
+                  <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="checker">Checker (check-in only)</SelectItem>
+                    <SelectItem value="host">Host (full access)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={sendInvite}><Copy className="h-4 w-4 mr-1" />Generate invite link</Button>
+            </div>
             <div className="space-y-2">
               {members.map((m: any) => (
                 <div key={m.id} className="flex items-center justify-between text-sm border-b last:border-0 py-2">
@@ -176,40 +251,72 @@ export default function HostDashboard() {
                         <Copy className="h-3 w-3 mr-1" />Copy link
                       </Button>
                     )}
+                    {m.user_id !== user?.id && (
+                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => removeMember(m.id)}><Trash2 className="h-3 w-3" /></Button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </Card>
-        </TabsContent>
-        <TabsContent value="reports" className="mt-4">
+        </TabsContent>}
+        {isOwnerHost && <TabsContent value="reports" className="mt-4">
           <Card className="p-4">
             {reports.length === 0 ? (
               <p className="text-sm text-muted-foreground py-4 text-center">No reports.</p>
             ) : (
               <div className="space-y-2">
-                {reports.map((r: any) => (
-                  <div key={r.id} className="flex items-center justify-between text-sm border-b last:border-0 py-2 gap-2">
+                {reports.map((r: any) => {
+                  const t = reportTargets[`${r.target_type}:${r.target_id}`];
+                  const alreadyHidden = t && (t.hidden === true || (r.target_type === "event" && t.status === "draft"));
+                  return (
+                  <div key={r.id} className="flex items-start justify-between text-sm border-b last:border-0 py-3 gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{r.target_type}</Badge>
                         <Badge variant={r.status === "open" ? "destructive" : "secondary"}>{r.status}</Badge>
+                        {alreadyHidden && <Badge variant="secondary">Hidden</Badge>}
                       </div>
                       <p className="text-muted-foreground mt-1 break-words">{r.reason}</p>
-                      <p className="text-xs text-muted-foreground">target id: {r.target_id}</p>
+                      {t && r.target_type === "event" && <Link to={`/events/${t.id}`} className="text-xs text-primary hover:underline">{t.title}</Link>}
+                      {t && r.target_type === "gallery" && <img src={t.image_url} alt="" className="mt-1 h-20 w-20 object-cover rounded" />}
+                      {t && r.target_type === "feedback" && <p className="text-xs mt-1">★{t.rating} — {t.comment}</p>}
+                      {!t && <p className="text-xs text-muted-foreground">target deleted or not found</p>}
                     </div>
                     {r.status === "open" && (
-                      <Button size="sm" variant="outline" onClick={async () => {
-                        const { error } = await supabase.from("reports").update({ status: "resolved" }).eq("id", r.id);
-                        if (error) toast.error(error.message); else { toast.success("Resolved"); load(); }
-                      }}>Mark resolved</Button>
+                      <div className="flex flex-col gap-1">
+                        {t && !alreadyHidden && (
+                          <Button size="sm" variant="destructive" onClick={() => hideTarget(r)}>
+                            <EyeOff className="h-3 w-3 mr-1" />Hide & resolve
+                          </Button>
+                        )}
+                        <Button size="sm" variant="outline" onClick={async () => {
+                          await supabase.from("reports").update({ status: "resolved" }).eq("id", r.id);
+                          toast.success("Resolved"); load();
+                        }}>Dismiss</Button>
+                      </div>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </Card>
-        </TabsContent>
+        </TabsContent>}
+        {isOwnerHost && profileForm && <TabsContent value="profile" className="mt-4">
+          <Card className="p-4 space-y-3 max-w-xl">
+            <div><Label>Host name</Label><Input value={profileForm.name} onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })} /></div>
+            <div><Label>Contact email</Label><Input type="email" value={profileForm.contact_email} onChange={(e) => setProfileForm({ ...profileForm, contact_email: e.target.value })} /></div>
+            <div><Label>Website</Label><Input value={profileForm.website} onChange={(e) => setProfileForm({ ...profileForm, website: e.target.value })} /></div>
+            <div><Label>Bio</Label><Textarea rows={3} value={profileForm.bio} onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })} /></div>
+            <div>
+              <Label>Logo</Label>
+              {profileForm.logo_url && <img src={profileForm.logo_url} alt="logo" className="mt-2 h-20 w-20 rounded-full object-cover" />}
+              <Input type="file" accept="image/*" className="mt-2" onChange={(e) => e.target.files?.[0] && uploadLogo(e.target.files[0])} />
+            </div>
+            <Button onClick={saveProfile} disabled={savingProfile}>Save profile</Button>
+          </Card>
+        </TabsContent>}
       </Tabs>
     </div>
   );
