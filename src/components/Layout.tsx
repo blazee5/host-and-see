@@ -3,7 +3,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useMyHost } from "@/hooks/useMyHost";
 import { ThemeProvider, useTheme } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
-import { Calendar, LogOut, Ticket, LayoutDashboard, Compass, Moon, Sun } from "lucide-react";
+import { Calendar, LogOut, Ticket, LayoutDashboard, Compass, Moon, Sun, CalendarCheck } from "lucide-react";
 
 function Nav() {
   const { user, signOut } = useAuth();
@@ -25,6 +25,7 @@ function Nav() {
         </Link>
         <nav className="flex items-center gap-1">
           <NavLink to="/explore" className={linkCls}><Compass className="inline h-4 w-4 mr-1" />Explore</NavLink>
+          {user && <NavLink to="/me/events" className={linkCls}><CalendarCheck className="inline h-4 w-4 mr-1" />My Events</NavLink>}
           {user && <NavLink to="/me/tickets" className={linkCls}><Ticket className="inline h-4 w-4 mr-1" />My Tickets</NavLink>}
           {user && primaryHost && (
             <NavLink to="/host/dashboard" className={linkCls}><LayoutDashboard className="inline h-4 w-4 mr-1" />Host</NavLink>
