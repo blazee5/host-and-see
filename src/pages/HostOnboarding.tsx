@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 
-const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const slugifyInput = (s: string) => s.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/-{2,}/g, "-").replace(/^-+/, "").slice(0, 40);
 
 export default function HostOnboarding() {
   const { user, loading } = useAuth();
@@ -49,7 +50,7 @@ export default function HostOnboarding() {
     e.preventDefault();
     if (!user) return;
     setBusy(true);
-    const finalSlug = slug || slugify(name) + "-" + Math.random().toString(36).slice(2, 6);
+    const finalSlug = slugify(slug || name) || `host-${Math.random().toString(36).slice(2, 6)}`;
     const { error } = await supabase.from("hosts").insert({
       owner_id: user.id, name, slug: finalSlug, bio: bio || null,
       contact_email: contactEmail || null, website: website || null, logo_url: logoUrl,
@@ -68,7 +69,7 @@ export default function HostOnboarding() {
         <p className="text-sm text-muted-foreground mb-6">Set up your host profile to start publishing events.</p>
         <form onSubmit={submit} className="space-y-4">
           <div><Label>Host name</Label><Input value={name} onChange={(e) => { setName(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)); }} required /></div>
-          <div><Label>URL slug</Label><Input value={slug} onChange={(e) => { setSlugEdited(true); setSlug(slugify(e.target.value)); }} placeholder="my-community" /></div>
+          <div><Label>URL slug</Label><Input value={slug} onChange={(e) => { setSlugEdited(true); setSlug(slugifyInput(e.target.value)); }} placeholder="my-community" /></div>
           <div><Label>Contact email *</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required /></div>
           <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           <div><Label>Bio</Label><Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} /></div>
