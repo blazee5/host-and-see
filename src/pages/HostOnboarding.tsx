@@ -18,6 +18,7 @@ export default function HostOnboarding() {
   const nav = useNavigate();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
   const [bio, setBio] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [website, setWebsite] = useState("");
@@ -66,8 +67,8 @@ export default function HostOnboarding() {
         <h1 className="text-2xl font-bold mb-1">Become a Host</h1>
         <p className="text-sm text-muted-foreground mb-6">Set up your host profile to start publishing events.</p>
         <form onSubmit={submit} className="space-y-4">
-          <div><Label>Host name</Label><Input value={name} onChange={(e) => { setName(e.target.value); if (!slug) setSlug(slugify(e.target.value)); }} required /></div>
-          <div><Label>URL slug</Label><Input value={slug} onChange={(e) => setSlug(slugify(e.target.value))} placeholder="my-community" /></div>
+          <div><Label>Host name</Label><Input value={name} onChange={(e) => { setName(e.target.value); if (!slugEdited) setSlug(slugify(e.target.value)); }} required /></div>
+          <div><Label>URL slug</Label><Input value={slug} onChange={(e) => { setSlugEdited(true); setSlug(slugify(e.target.value)); }} placeholder="my-community" /></div>
           <div><Label>Contact email *</Label><Input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} required /></div>
           <div><Label>Website</Label><Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://…" /></div>
           <div><Label>Bio</Label><Textarea value={bio} onChange={(e) => setBio(e.target.value)} rows={3} /></div>
