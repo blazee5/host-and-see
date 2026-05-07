@@ -10,6 +10,7 @@ import { eventDateLabel, isPast, googleCalUrl } from "@/lib/event-helpers";
 import { Calendar, MapPin, Users, Link as LinkIcon, Flag } from "lucide-react";
 import { EventGallery } from "@/components/EventGallery";
 import { EventFeedback } from "@/components/EventFeedback";
+import { useSeo } from "@/hooks/useSeo";
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -40,6 +41,12 @@ export default function EventDetail() {
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id, user?.id]);
+
+  useSeo({
+    title: event ? `${event.title} · Gather` : "Event · Gather",
+    description: event?.description?.slice(0, 160) || "Community event on Gather.",
+    image: event?.cover_url || null,
+  });
 
   if (!event) return <div className="container py-12 text-muted-foreground">Loading…</div>;
   const past = isPast(event.end_at);
