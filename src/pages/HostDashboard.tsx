@@ -121,7 +121,12 @@ export default function HostDashboard() {
     if (!primaryHost) return;
     const token = crypto.randomUUID();
     const { error } = await supabase.from("host_members").insert({ host_id: primaryHost.id, role: inviteRole, invite_token: token });
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = /duplicate key|host_members_host_id_user_id_role_key/i.test(error.message)
+        ? `An invite for this ${inviteRole} role already exists or this person is already on the team.`
+        : error.message;
+      return toast.error(msg);
+    }
     const link = `${window.location.origin}/host/invite/${token}`;
     await navigator.clipboard.writeText(link);
     toast.success(`${inviteRole} invite link copied`);
