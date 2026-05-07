@@ -21,7 +21,16 @@ export default function HostInvite() {
     setBusy(true);
     const { error } = await supabase.rpc("accept_host_invite", { _token: token });
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = /duplicate key|host_members_host_id_user_id_role_key/i.test(error.message)
+        ? "You're already a member of this host team."
+        : /invalid invite/i.test(error.message)
+        ? "This invite link is invalid or has already been used."
+        : /signed in/i.test(error.message)
+        ? "Please sign in to accept this invite."
+        : error.message;
+      return toast.error(msg);
+    }
     toast.success("You've joined the host team");
     nav("/host/dashboard");
   };
