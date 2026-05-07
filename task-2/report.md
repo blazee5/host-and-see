@@ -34,6 +34,13 @@
 - Host onboarding now collects logo (uploaded to the `host-logos` bucket), contact email (required), website, and bio. The dashboard has a Profile tab to edit these later.
 - My Events shows two tabs (Attending / Hosting), with shared search + when (upcoming / past / all) + host filter, and role-appropriate quick actions (View ticket for attendees, Check-in / Edit for host-side roles).
 
+## Recent updates
+- **Mobile responsiveness**: Layout, Index, Explore, EventDetail, HostDashboard and MyEvents pages reworked with responsive grids, stacked nav, and mobile-friendly spacing for small viewports.
+- **Host detection fix**: `useMyHost` now resolves host membership reliably so users who already created a host no longer see the "Become a host" CTA repeatedly (migration backfilled missing `host_members` rows for existing owners).
+- **Slug sanitisation**: host onboarding splits slug handling into two helpers — `slugifyInput` allows hyphens and trims them sensibly during typing, while `slugify` finalises on save. Fixes "host" collapsing to "h" and rejection of dashes in manual edits.
+- **Dark-mode date pickers**: `.dark` selector sets `color-scheme: dark` on native `date`/`time`/`datetime-local`/`month`/`week` inputs so picker icons render light instead of black.
+- **CSV export fix**: `HostDashboard` no longer relies on the implicit `rsvps → profiles` embed (no FK declared). It fetches profiles separately via `select("id,full_name,email").in("id", userIds)` and merges them into the export, so the file always contains attendee names and emails.
+
 ## Pages delivered
 | Spec page | Route |
 |---|---|
