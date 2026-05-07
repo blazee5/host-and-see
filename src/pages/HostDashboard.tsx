@@ -74,9 +74,15 @@ export default function HostDashboard() {
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [primaryHost?.id]);
 
   const exportCsv = async (eventId: string, title: string) => {
-    const { data: rsvps } = await supabase.from("rsvps").select("user_id,status,profiles:user_id(full_name,email)").eq("event_id", eventId);
+    const { data: rsvps } = await supabase.from("rsvps").select("user_id,status").eq("event_id", eventId);
     const { data: tickets } = await supabase.from("tickets").select("id,user_id").eq("event_id", eventId);
     const { data: checkins } = await supabase.from("checkins").select("ticket_id,checked_in_at").eq("event_id", eventId);
+    const userIds = Array.from(new Set((rsvps || []).map((r: any) => r.user_id)));
+    const profileByUser: Record<string, { full_name: string | null; email: string | null }> = {};
+    if (userIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id,full_name,email").in("id", userIds);
+      (profs || []).forEach((p: any) => { profileByUser[p.id] = { full_name: p.full_name, email: p.email }; });
+    }
     const ticketByUser: Record<string, string> = {};
     (tickets || []).forEach((t: any) => { ticketByUser[t.user_id] = t.id; });
     const ciByTicket: Record<string, string> = {};
@@ -84,7 +90,8 @@ export default function HostDashboard() {
     const rows = [["name", "email", "rsvp_status", "checkin_time"]];
     (rsvps || []).forEach((r: any) => {
       const ci = ticketByUser[r.user_id] ? ciByTicket[ticketByUser[r.user_id]] || "" : "";
-      rows.push([r.profiles?.full_name || "", r.profiles?.email || "", r.status, ci]);
+      const p = profileByUser[r.user_id] || { full_name: "", email: "" };
+      rows.push([p.full_name || "", p.email || "", r.status, ci]);
     });
     const csv = "\uFEFF" + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\r\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
